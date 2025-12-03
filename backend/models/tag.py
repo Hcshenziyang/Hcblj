@@ -8,7 +8,7 @@ from backend.db.session import Base
 record_tag_association = Table(
     "record_tag_association",
     Base.metadata,
-    Column("record_id", Integer, ForeignKey("ledger_records.id")),
+    Column("record_id", Integer, ForeignKey("hcblj_records.id")),
     Column("tag_id", Integer, ForeignKey("tags.id")),
 )
 

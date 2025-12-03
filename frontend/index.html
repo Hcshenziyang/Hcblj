@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>个人记账 MVP</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 connect-src http://127.0.0.1:8000;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 script-src 'self'">
+  <style>
+    :root { --bg:#f6f6fb; --card:#fff; --border:#e3e3ee; --text:#1f2430; --muted:#6b7280; --accent:#2563eb; }
+    body { font-family: "Segoe UI", Arial, sans-serif; margin:0; background:var(--bg); color:var(--text); }
+    header { padding:16px 20px; background:#0f172a; color:#e2e8f0; }
+    h1 { margin:0; font-size:20px; }
+    main { padding:18px; display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; box-shadow:0 6px 18px rgba(15,23,42,0.06); }
+    h2 { margin:0 0 10px; font-size:16px; }
+    form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    input, select, button, textarea { padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+    button { background:var(--accent); color:#fff; border:none; cursor:pointer; }
+    button.secondary { background:#e5e7eb; color:#111827; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .list { max-height:420px; overflow:auto; }
+    .item { border-bottom:1px solid var(--border); padding:8px 0; display:flex; justify-content:space-between; gap:12px; }
+    .item:last-child { border-bottom:none; }
+    .muted { color:var(--muted); font-size:12px; }
+    .error { color:#c00; margin-top:6px; }
+    .badge { background:#eef2ff; color:#3730a3; padding:2px 6px; border-radius:6px; font-size:12px; margin-right:4px; }
+    textarea { min-width:200px; min-height:60px; }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header><h1>个人记账 MVP</h1></header>
+  <main>
+    <section class="card">
+      <h2>新增记录</h2>
+      <form id="record-form">
+        <input name="amount" type="number" step="0.01" placeholder="金额" required />
+        <input name="currency" type="text" value="CNY" style="width:80px" />
+        <select name="category1"></select>
+        <select name="category2"><option value="">二级分类</option></select>
+        <input name="tags" type="text" placeholder="标签，逗号分隔" />
+        <input name="happened_at" type="datetime-local" />
+        <textarea name="note" placeholder="备注"></textarea>
+        <label><input type="checkbox" name="is_public" /> 公开</label>
+        <label><input type="checkbox" name="in_bill" checked /> 计入账单</label>
+        <button type="submit">添加</button>
+      </form>
+      <div id="record-error" class="error"></div>
+    </section>
+
+    <section class="card">
+      <h2>筛选 / 报表</h2>
+      <form id="filter-form">
+        <div class="row">
+          <label>开始<input type="date" name="start"></label>
+          <label>结束<input type="date" name="end"></label>
+          <select name="category1_filter"></select>
+          <select name="category2_filter"><option value="">二级分类</option></select>
+          <input name="tag_filter" placeholder="标签" />
+          <label><input type="checkbox" name="public_only" /> 仅公开</label>
+          <button type="submit">应用筛选</button>
+        </div>
+      </form>
+      <form id="report-form" class="row">
+        <input name="year" type="number" placeholder="年" style="width:80px" />
+        <input name="month" type="number" placeholder="月" style="width:60px" />
+        <button type="submit">刷新月报</button>
+      </form>
+      <div id="report"></div>
+      <div id="chart" class="muted"></div>
+    </section>
+
+    <section class="card">
+      <h2>分类 / 标签</h2>
+      <form id="cat1-form" class="row">
+        <input name="name" placeholder="一级分类名" required />
+        <button type="submit">新增一级</button>
+      </form>
+      <form id="cat2-form" class="row">
+        <select name="level1" required></select>
+        <input name="name" placeholder="二级分类名" required />
+        <button type="submit">新增二级</button>
+      </form>
+      <form id="tag-form" class="row">
+        <input name="name" placeholder="标签名" required />
+        <button type="submit">新增标签</button>
+      </form>
+      <div class="row">
+        <div><strong>标签列表</strong> <span id="tag-list" class="muted">加载中...</span></div>
+      </div>
+      <div class="row">
+        <div><strong>分类列表</strong> <span id="cat-list" class="muted">加载中...</span></div>
+      </div>
+      <div id="cat-error" class="error"></div>
+      <div id="tag-error" class="error"></div>
+    </section>
+
+    <section class="card">
+      <h2>记录列表</h2>
+      <div id="records" class="list"></div>
+    </section>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>
