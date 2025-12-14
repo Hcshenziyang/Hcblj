@@ -1,11 +1,14 @@
 # app/services/record_service.py
 # 业务逻辑层
+from idlelib.query import Query
+from sqlalchemy import asc
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from backend.models.record import LedgerRecord
 from backend.schemas.record import LedgerRecordCreate,LedgerRecordUpdate
 from backend.models.category import CategoryLevel1, CategoryLevel2
 from datetime import datetime
+
 
 def create_record(db: Session, data: LedgerRecordCreate) -> LedgerRecord:
     """创建记账记录"""
@@ -35,15 +38,22 @@ def create_record(db: Session, data: LedgerRecordCreate) -> LedgerRecord:
     db.refresh(new_record)
     return new_record
 
-def list_records(db: Session, start: datetime | None = None,
-                 end: datetime | None = None,
-                 category1: int | None = None,
-                 category2: int | None = None,
-                 tag: str | None = None,
-                 public_only: bool | None = None,
-                 ):
+# 记录列表，支持筛选、分页
+async def list_records(
+        db: Session,
+        start: datetime | None = None,
+        end: datetime | None = None,
+        category1: int | None = None,
+        category2: int | None = None,
+        tag: str | None = None,
+        public_only: bool | None = None,
+        last_id: int | None = Query(None),
+        limit: int = Query(20, gt=0, le=100),  # 每次20条数据，最小0，最大100
+):
+    # 基础查询
     query = db.query(LedgerRecord)
 
+    # 条件筛选
     if start:
         query = query.filter(LedgerRecord.happened_at >= start)
     if end:
@@ -56,8 +66,26 @@ def list_records(db: Session, start: datetime | None = None,
         query = query.filter(LedgerRecord.tags.contains([tag]))
     if public_only is True:
         query = query.filter(LedgerRecord.is_public == True)
-    return query.order_by(LedgerRecord.happened_at.desc()).all()
 
+    # 游标分页
+    if last_id:
+        # 如果有last_id，则从上次位置继续取
+        query = query.filter(LedgerRecord.id > last_id)
+
+    # 固定排序+limit
+    query = query.order_by(asc(LedgerRecord.id)).limit(limit)
+
+    # 执行查询
+    results = query.all()  # 发送SQL给数据库并取回结果(python列表)，元素是ORM对象。
+    next_cursor = results[-1].id if results else None  # [-1].id拿到最后一条数据id
+
+    return {
+        "records": results,
+        "next_cursor": next_cursor,  # 前端存储，用于下一次last_id
+        "has_more": len(results) == limit,  # 判断是否还有下一页可取，前端可以据此决定是否继续加载
+    }
+
+# 获取单条记录
 def get_record(db: Session, record_id: int) -> LedgerRecord:
     """获取单条记录"""
     record = db.get(LedgerRecord, record_id)
@@ -65,6 +93,7 @@ def get_record(db: Session, record_id: int) -> LedgerRecord:
         raise HTTPException(status_code=404, detail="Record not found")
     return record
 
+# 更新单条记录
 def update_record(db: Session, record_id: int, data: LedgerRecordUpdate) -> LedgerRecord:
     """更新记账记录"""
     # 验证分类存在
@@ -86,6 +115,7 @@ def update_record(db: Session, record_id: int, data: LedgerRecordUpdate) -> Ledg
     db.refresh(record)
     return record
 
+# 删除单条记录
 def delete_record(db: Session, record_id: int):
     """删除记录"""
     record = db.get(LedgerRecord, record_id)
@@ -95,6 +125,7 @@ def delete_record(db: Session, record_id: int):
     db.delete(record)
     db.commit()
 
+# 月度统计
 def monthly_report(db: Session, year: int, month: int):
     # 当月范围
     start = datetime(year, month, 1)
@@ -144,6 +175,7 @@ def monthly_report(db: Session, year: int, month: int):
         "by_category2": by_cat2,
     }
 
+# 月度报表
 def monthly_chart(db: Session, year: int, month: int):
     report = monthly_report(db, year, month)
 

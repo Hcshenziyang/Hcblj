@@ -1,2 +1,4 @@
+# 临时记录
 pip install fastapi
 pip install "uvicorn[standard]"
+pip install sqlalchemy

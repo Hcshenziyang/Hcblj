@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from backend.models.tag import Tag
 
+# 创建标签
 def create_tag(db: Session, name: str):
     exists = db.query(Tag).filter_by(name=name).first()
     if exists:
@@ -13,6 +14,6 @@ def create_tag(db: Session, name: str):
     db.refresh(tag)
     return tag
 
-
+# 标签列表
 def list_tags(db: Session):
     return db.query(Tag).order_by(Tag.id).all()

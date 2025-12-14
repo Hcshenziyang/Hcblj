@@ -1,19 +1,13 @@
-personal_workstation
-├── backend/
-│   ├── main.py        # FastAPI 主入口
-│   ├── models.py      # 数据模型
-│   ├── database.py    # SQLite 连接
-│   └── routers/
-│       ├── notes.py   # 笔记 API
-│       └── ai.py      # AI 调用 API
-│
-├── frontend/
-│   ├── main.py        # PySide6 启动文件
-│   ├── ui/
-│   │   ├── home.py
-│   │   ├── launcher.py
-│   │   ├── notes.py
-│   │   └── ai.py
-│   └── assets/        # 图标/资源
-│
-└── README.md
+个人助理类工具。
+“hcblj”是红茶半两酒的拼音首字母，鄙人网名。
+目前初步规划功能主要涉及记账、AI快速调用、数据信息汇总展示。
+程序为前后端分离，因为前端学习问题，可能前端会滞后开发，后端接口可能会更快的开发完善。
+
+现有功能梳理：
+    记账
+        分类
+        标签
+        记录
+
+2025-12-04:
+    
